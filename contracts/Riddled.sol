@@ -8,4 +8,8 @@ contract Riddled {
     function doInvalid() {
         assembly { invalid }
     }
+
+    function doBadJump() {
+        assembly { jump(0) }
+    }
 }
