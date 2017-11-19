@@ -4,5 +4,5 @@ Run:
 
 * `npm install`
 * `./node_modules/.bin/mocha test/debugFunctions.js`
-* start Geth with `--rpcapi`
+* start Geth with `--rpcapi "web3,eth,net,debug"`
 * `./node_modules/.bin/truffle test test/riddled.js`
