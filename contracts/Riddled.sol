@@ -4,4 +4,8 @@ contract Riddled {
     function doRevert() {
         revert();
     }
+
+    function doInvalid() {
+        assembly { invalid }
+    }
 }

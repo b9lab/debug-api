@@ -61,7 +61,7 @@ contract('Riddled', function(accounts) {
             return instance.doRevert({ from: owner, gas: MAX_GAS })
                 .then(
                     txObject => {
-                        if (typeof txObject.receipt.status != "undefined") {
+                        if (typeof txObject.receipt.status !== "undefined") {
                             // Post Byzantium
                             assert.equal(txObject.receipt.status, 0);
                             assert.isBelow(txObject.receipt.gasUsed, MAX_GAS);
@@ -89,6 +89,37 @@ contract('Riddled', function(accounts) {
                     assert.strictEqual(trace.returnValue, "");
                     const lastStep = trace.structLogs[trace.structLogs.length - 1];
                     assert.strictEqual(lastStep.op, "REVERT");
+                });
+        });
+    });
+
+    describe("doInvalid()", function() {
+        it("should have failed in receipt", function() {
+            return instance.doInvalid({ from: owner, gas: MAX_GAS })
+                .then(
+                    txObject => {
+                        // Always consumes all
+                        assert.equal(txObject.receipt.gasUsed, MAX_GAS);
+                        if (typeof txObject.receipt.status !== "undefined") {
+                            // Post Byzantium
+                            assert.equal(txObject.receipt.status, 0);
+                        }
+                    },
+                    e => {
+                        assert.isTrue(isTestRPC);
+                        assert.isAtLeast(e.toString().indexOf("invalid opcode"), 0);
+                    }
+                );
+        });
+
+        it("should have failed in trace", function() {
+            if (!hasDebug) this.skip("Needs debug API");
+            return instance.doInvalid({ from: owner, gas: MAX_GAS })
+                .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
+                .then(trace => {
+                    assert.strictEqual(trace.returnValue, "");
+                    const lastStep = trace.structLogs[trace.structLogs.length - 1];
+                    assert.strictEqual(lastStep.op, "Missing opcode 0xfe");
                 });
         });
     });
