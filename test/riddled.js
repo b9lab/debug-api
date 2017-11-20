@@ -4,6 +4,7 @@ const Promise = require('bluebird');
 
 const Riddled = artifacts.require("./Riddled.sol");
 const addDebugFunctions = require("../utils/debugFunctions.js");
+const SolidityFunctions = require("web3/lib/web3/function.js");
 
 addDebugFunctions(web3);
 
@@ -56,6 +57,11 @@ contract('Riddled', function(accounts) {
                 e => { console.log(e); throw e; }
             );
     });
+
+    const createRiddledSolidityFunction = funcName => new SolidityFunctions(
+        web3.eth,
+        Riddled.abi.find(func => func.name == funcName),
+        instance.address);
 
     beforeEach("should deploy a Riddled", function() {
         return Riddled.new({ from: owner })
@@ -226,6 +232,7 @@ contract('Riddled', function(accounts) {
         it("should return opposite in trace", function() {
             if (!hasDebug) this.skip("Needs debug API");
             const self = this;
+            const returnNotFunc = createRiddledSolidityFunction("returnNot");
             return instance.returnNot(true)
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
@@ -237,6 +244,8 @@ contract('Riddled', function(accounts) {
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000000");
                     assert.equal(trace.returnValue, 0);
+                    const unpackedOutput = returnNotFunc.unpackOutput("0x" + trace.returnValue);
+                    assert.isFalse(unpackedOutput);
                     return instance.returnNot(false);
                 })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
@@ -245,6 +254,8 @@ contract('Riddled', function(accounts) {
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000001");
                     assert.equal(trace.returnValue, 1);
+                    const unpackedOutput = returnNotFunc.unpackOutput("0x" + trace.returnValue);
+                    assert.isTrue(unpackedOutput);
                 });
         });
     });
@@ -290,6 +301,7 @@ contract('Riddled', function(accounts) {
         it("should return minus 1 in trace", function() {
             if (!hasDebug) this.skip("Needs debug API");
             const self = this;
+            const returnMinusOneFunc = createRiddledSolidityFunction("returnMinusOne");
             return instance.returnMinusOne(20)
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
@@ -301,6 +313,8 @@ contract('Riddled', function(accounts) {
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000013");
                     assert.equal("0x" + trace.returnValue, 19);
+                    const unpackedOutput = returnMinusOneFunc.unpackOutput("0x" + trace.returnValue);
+                    assert.strictEqual(unpackedOutput.toString(10), "19");
                     return instance.returnMinusOne(1);
                 })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
@@ -309,6 +323,8 @@ contract('Riddled', function(accounts) {
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000000");
                     assert.equal(trace.returnValue, 0);
+                    const unpackedOutput = returnMinusOneFunc.unpackOutput("0x" + trace.returnValue);
+                    assert.strictEqual(unpackedOutput.toString(10), "0");
                     return instance.returnMinusOne(0);
                 })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
@@ -369,6 +385,7 @@ contract('Riddled', function(accounts) {
         it("should return minus and plus 1 in trace", function() {
             if (!hasDebug) this.skip("Needs debug API");
             const self = this;
+            const returnMinusPlusOneFunc = createRiddledSolidityFunction("returnMinusPlusOne");
             return instance.returnMinusPlusOne(20)
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
@@ -380,6 +397,9 @@ contract('Riddled', function(accounts) {
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000013" +
                         "0000000000000000000000000000000000000000000000000000000000000015");
+                    const unpackedOutputs = returnMinusPlusOneFunc.unpackOutput("0x" + trace.returnValue);
+                    assert.strictEqual(unpackedOutputs[0].toString(10), "19");
+                    assert.strictEqual(unpackedOutputs[1].toString(10), "21");
                     return instance.returnMinusPlusOne(1);
                 })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
@@ -388,6 +408,9 @@ contract('Riddled', function(accounts) {
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000000" +
                         "0000000000000000000000000000000000000000000000000000000000000002");
+                    const unpackedOutputs = returnMinusPlusOneFunc.unpackOutput("0x" + trace.returnValue);
+                    assert.strictEqual(unpackedOutputs[0].toString(10), "0");
+                    assert.strictEqual(unpackedOutputs[1].toString(10), "2");
                     return instance.returnMinusPlusOne(0);
                 })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
@@ -396,6 +419,9 @@ contract('Riddled', function(accounts) {
                         trace.returnValue,
                         MAX_UINT +
                         "0000000000000000000000000000000000000000000000000000000000000001");
+                    const unpackedOutputs = returnMinusPlusOneFunc.unpackOutput("0x" + trace.returnValue);
+                    assert.strictEqual(unpackedOutputs[0].toString(16), MAX_UINT);
+                    assert.strictEqual(unpackedOutputs[1].toString(10), "1");
                 });
         });
     });
