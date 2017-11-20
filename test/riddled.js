@@ -316,4 +316,88 @@ contract('Riddled', function(accounts) {
         });
     });
 
+    describe("returnMinusPlusOne()", function() {
+        const MAX_UINT = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        it("should return minus and plus 1 on call", function() {
+            return instance.returnMinusPlusOne.call(20)
+                .then(returned => {
+                    assert.strictEqual(returned[0].toString(10), "19");
+                    assert.strictEqual(returned[1].toString(10), "21");
+                })
+                .then(() => instance.returnMinusPlusOne.call(1))
+                .then(returned => {
+                    assert.strictEqual(returned[0].toString(10), "0");
+                    assert.strictEqual(returned[1].toString(10), "2");
+                })
+                .then(() => instance.returnMinusPlusOne.call(0))
+                .then(returned => {
+                    assert.strictEqual(returned[0].toString(16), MAX_UINT);
+                    assert.strictEqual(returned[1].toString(10), "1");
+                });
+        });
+
+        it("should return minus and plus 1 in receipt logs", function() {
+            return instance.returnMinusPlusOne(20)
+                .then(txObject => {
+                    if (typeof txObject.receipt.status !== "undefined") {
+                        // Post Byzantium
+                        assert.equal(txObject.receipt.status, 1);
+                    }
+                    assert.strictEqual(txObject.logs[0].args.value1.toString(10), "19");
+                    assert.strictEqual(txObject.logs[0].args.value2.toString(10), "21");
+                })
+                .then(() => instance.returnMinusPlusOne(1))
+                .then(txObject => {
+                    if (typeof txObject.receipt.status !== "undefined") {
+                        // Post Byzantium
+                        assert.equal(txObject.receipt.status, 1);
+                    }
+                    assert.strictEqual(txObject.logs[0].args.value1.toString(10), "0");
+                    assert.strictEqual(txObject.logs[0].args.value2.toString(10), "2");
+                })
+                .then(() => instance.returnMinusPlusOne(0))
+                .then(txObject => {
+                    if (typeof txObject.receipt.status !== "undefined") {
+                        // Post Byzantium
+                        assert.equal(txObject.receipt.status, 1);
+                    }
+                    assert.strictEqual(txObject.logs[0].args.value1.toString(16), MAX_UINT);
+                    assert.strictEqual(txObject.logs[0].args.value2.toString(10), "1");
+                });
+        });
+
+        it("should return minus and plus 1 in trace", function() {
+            if (!hasDebug) this.skip("Needs debug API");
+            const self = this;
+            return instance.returnMinusPlusOne(20)
+                .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
+                .then(trace => {
+                    // TODO remove this check when TestRPC is fixed
+                    if (trace.returnValue === "" && isTestRPC) {
+                        self.skip("TestRPC does not populate the return value");
+                    }
+                    assert.strictEqual(
+                        trace.returnValue,
+                        "0000000000000000000000000000000000000000000000000000000000000013" +
+                        "0000000000000000000000000000000000000000000000000000000000000015");
+                    return instance.returnMinusPlusOne(1);
+                })
+                .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
+                .then(trace => {
+                    assert.strictEqual(
+                        trace.returnValue,
+                        "0000000000000000000000000000000000000000000000000000000000000000" +
+                        "0000000000000000000000000000000000000000000000000000000000000002");
+                    return instance.returnMinusPlusOne(0);
+                })
+                .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
+                .then(trace => {
+                    assert.strictEqual(
+                        trace.returnValue,
+                        MAX_UINT +
+                        "0000000000000000000000000000000000000000000000000000000000000001");
+                });
+        });
+    });
+
 });
