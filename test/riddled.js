@@ -196,4 +196,57 @@ contract('Riddled', function(accounts) {
         });
     });
 
+    describe("returnNot()", function() {
+        it("should return opposite on call", function() {
+            return instance.returnNot.call(true)
+                .then(returned => assert.isFalse(returned))
+                .then(() => instance.returnNot.call(false))
+                .then(returned => assert.isTrue(returned));
+        });
+
+        it("should return opposite in receipt logs", function() {
+            return instance.returnNot(true)
+                .then(txObject => {
+                    if (typeof txObject.receipt.status !== "undefined") {
+                        // Post Byzantium
+                        assert.equal(txObject.receipt.status, 1);
+                    }
+                    assert.isFalse(txObject.logs[0].args.value);
+                })
+                .then(() => instance.returnNot(false))
+                .then(txObject => {
+                    if (typeof txObject.receipt.status !== "undefined") {
+                        // Post Byzantium
+                        assert.equal(txObject.receipt.status, 1);
+                    }
+                    assert.isTrue(txObject.logs[0].args.value);
+                });
+        });
+
+        it("should return opposite in trace", function() {
+            if (!hasDebug) this.skip("Needs debug API");
+            const self = this;
+            return instance.returnNot(true)
+                .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
+                .then(trace => {
+                    // TODO remove this check when TestRPC is fixed
+                    if (trace.returnValue === "" && isTestRPC) {
+                        self.skip("TestRPC does not populate the return value");
+                    }
+                    assert.strictEqual(
+                        trace.returnValue,
+                        "0000000000000000000000000000000000000000000000000000000000000000");
+                    assert.equal(trace.returnValue, 0);
+                    return instance.returnNot(false);
+                })
+                .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
+                .then(trace => {
+                    assert.strictEqual(
+                        trace.returnValue,
+                        "0000000000000000000000000000000000000000000000000000000000000001");
+                    assert.equal(trace.returnValue, 1);
+                });
+        });
+    });
+
 });
