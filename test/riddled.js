@@ -46,9 +46,15 @@ contract('Riddled', function(accounts) {
             });
     });
 
-    before("should identify debug API", function() {
-        return web3.debug.memStatsPromise()
-            .then(memStats => hasDebug = typeof memStats === "object");
+    before("should identify debug traceTransaction", function() {
+        return web3.eth.sendTransactionPromise({ from: owner, to: owner })
+            .then(txHash => web3.eth.getTransactionReceiptMined(txHash))
+            .then(receipt => web3.debug.traceTransactionPromise(receipt.transactionHash))
+            .then(
+                trace => hasDebug = typeof trace === "object"
+                    && typeof trace.returnValue !== "undefined",
+                e => { console.log(e); throw e; }
+            );
     });
 
     beforeEach("should deploy a Riddled", function() {
@@ -72,8 +78,8 @@ contract('Riddled', function(accounts) {
                     },
                     e => {
                         assert.isTrue(isTestRPC);
-                        const isRevert = 0 <= e.toString().indexOf("revert"); // Post Byzantium
-                        const isInvalid = 0 <= e.toString().indexOf("invalid opcode"); // Pre Byzantium
+                        const isRevert = 0 <= e.toString().indexOf("revert"); // Post EIP 140
+                        const isInvalid = 0 <= e.toString().indexOf("invalid opcode"); // Pre EIP 140
                         assert.isTrue(
                             isRevert || isInvalid,
                             "isRevert: " + isRevert + ", isInvalid: " + isInvalid);
@@ -83,13 +89,24 @@ contract('Riddled', function(accounts) {
 
         it("should have failed in trace", function() {
             if (!hasDebug) this.skip("Needs debug API");
+            const self = this;
             return instance.doRevert({ from: owner, gas: MAX_GAS })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
-                .then(trace => {
-                    assert.strictEqual(trace.returnValue, "");
-                    const lastStep = trace.structLogs[trace.structLogs.length - 1];
-                    assert.strictEqual(lastStep.op, "REVERT");
-                });
+                .then(
+                    trace => {
+                        assert.isTrue(trace.failed || isTestRPC); // TestRPC does not populate this field
+                        assert.strictEqual(trace.returnValue, "");
+                        const lastStep = trace.structLogs[trace.structLogs.length - 1];
+                        assert.strictEqual(lastStep.op, "REVERT");
+                    },
+                    e => {
+                        if (isTestRPC && e.toString().indexOf("revert") >= 0) {
+                            self.skip("TestRPC in auto-mining");
+                        } else {
+                            throw e;
+                        }
+                    }
+                );
         });
     });
 
@@ -114,13 +131,26 @@ contract('Riddled', function(accounts) {
 
         it("should have failed in trace", function() {
             if (!hasDebug) this.skip("Needs debug API");
+            // TODO remove the skip below when TestRPC is fixed.
+            if (isTestRPC) this.skip("For some reason TestRPC cannot trace up to the missing opcode");
+            const self = this;
             return instance.doInvalid({ from: owner, gas: MAX_GAS })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
-                .then(trace => {
-                    assert.strictEqual(trace.returnValue, "");
-                    const lastStep = trace.structLogs[trace.structLogs.length - 1];
-                    assert.strictEqual(lastStep.op, "Missing opcode 0xfe");
-                });
+                .then(
+                    trace => {
+                        assert.isTrue(trace.failed || isTestRPC); // TestRPC does not populate this field
+                        assert.strictEqual(trace.returnValue, "");
+                        const lastStep = trace.structLogs[trace.structLogs.length - 1];
+                        assert.strictEqual(lastStep.op, "Missing opcode 0xfe");
+                    },
+                    e => {
+                        if (isTestRPC && e.toString().indexOf("invalid opcode") >= 0) {
+                            self.skip("TestRPC in auto-mining");
+                        } else {
+                            throw e;
+                        }
+                    }
+                );
         });
     });
 
@@ -138,20 +168,31 @@ contract('Riddled', function(accounts) {
                     },
                     e => {
                         assert.isTrue(isTestRPC);
-                        assert.isAtLeast(e.toString().indexOf("invalid JUMP at"), 0);
+                        assert.isAtLeast(e.toString().indexOf("invalid JUMP"), 0);
                     }
                 );
         });
 
         it("should have failed in trace", function() {
             if (!hasDebug) this.skip("Needs debug API");
+            const self = this;
             return instance.doBadJump({ from: owner, gas: MAX_GAS })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
-                .then(trace => {
-                    assert.strictEqual(trace.returnValue, "");
-                    const lastStep = trace.structLogs[trace.structLogs.length - 1];
-                    assert.strictEqual(lastStep.op, "JUMP");
-                });
+                .then(
+                    trace => {
+                        assert.isTrue(trace.failed || isTestRPC); // TestRPC does not populate this field
+                        assert.strictEqual(trace.returnValue, "");
+                        const lastStep = trace.structLogs[trace.structLogs.length - 1];
+                        assert.strictEqual(lastStep.op, "JUMP");
+                    },
+                    e => {
+                        if (isTestRPC && e.toString().indexOf("invalid JUMP at") >= 0) {
+                            self.skip("TestRPC in auto-mining");
+                        } else {
+                            throw e;
+                        }
+                    }
+                );
         });
     });
 
