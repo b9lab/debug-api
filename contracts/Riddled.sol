@@ -19,4 +19,11 @@ contract Riddled {
         returned = !value;
         LogBool(returned);
     }
+
+    event LogUint(uint value);
+
+    function returnMinusOne(uint value) returns (uint returned) {
+        returned = value - 1;
+        LogUint(returned);
+    }
 }
