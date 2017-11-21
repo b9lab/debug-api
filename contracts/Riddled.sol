@@ -27,11 +27,11 @@ contract Riddled {
         LogUint(returned);
     }
 
-    event LogTwoUint(uint value1, uint value2);
+    event LogUintString(uint value1, string value2);
 
-    function returnMinusPlusOne(uint value) returns (uint returned1, uint returned2) {
+    function returnMinusOneCiao(uint value) returns (uint returned1, string returned2) {
         returned1 = value - 1;
-        returned2 = value + 1;
-        LogTwoUint(returned1, returned2);
+        returned2 = "Ciao mondo";
+        LogUintString(returned1, returned2);
     }
 }

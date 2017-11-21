@@ -332,61 +332,61 @@ contract('Riddled', function(accounts) {
         });
     });
 
-    describe("returnMinusPlusOne()", function() {
+    describe("returnMinusOneCiao()", function() {
         const MAX_UINT = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-        it("should return minus and plus 1 on call", function() {
-            return instance.returnMinusPlusOne.call(20)
+        it("should return minus 1 and ciao on call", function() {
+            return instance.returnMinusOneCiao.call(20)
                 .then(returned => {
                     assert.strictEqual(returned[0].toString(10), "19");
-                    assert.strictEqual(returned[1].toString(10), "21");
+                    assert.strictEqual(returned[1], "Ciao mondo");
                 })
-                .then(() => instance.returnMinusPlusOne.call(1))
+                .then(() => instance.returnMinusOneCiao.call(1))
                 .then(returned => {
                     assert.strictEqual(returned[0].toString(10), "0");
-                    assert.strictEqual(returned[1].toString(10), "2");
+                    assert.strictEqual(returned[1], "Ciao mondo");
                 })
-                .then(() => instance.returnMinusPlusOne.call(0))
+                .then(() => instance.returnMinusOneCiao.call(0))
                 .then(returned => {
                     assert.strictEqual(returned[0].toString(16), MAX_UINT);
-                    assert.strictEqual(returned[1].toString(10), "1");
+                    assert.strictEqual(returned[1], "Ciao mondo");
                 });
         });
 
         it("should return minus and plus 1 in receipt logs", function() {
-            return instance.returnMinusPlusOne(20)
+            return instance.returnMinusOneCiao(20)
                 .then(txObject => {
                     if (typeof txObject.receipt.status !== "undefined") {
                         // Post Byzantium
                         assert.equal(txObject.receipt.status, 1);
                     }
                     assert.strictEqual(txObject.logs[0].args.value1.toString(10), "19");
-                    assert.strictEqual(txObject.logs[0].args.value2.toString(10), "21");
+                    assert.strictEqual(txObject.logs[0].args.value2, "Ciao mondo");
                 })
-                .then(() => instance.returnMinusPlusOne(1))
+                .then(() => instance.returnMinusOneCiao(1))
                 .then(txObject => {
                     if (typeof txObject.receipt.status !== "undefined") {
                         // Post Byzantium
                         assert.equal(txObject.receipt.status, 1);
                     }
                     assert.strictEqual(txObject.logs[0].args.value1.toString(10), "0");
-                    assert.strictEqual(txObject.logs[0].args.value2.toString(10), "2");
+                    assert.strictEqual(txObject.logs[0].args.value2, "Ciao mondo");
                 })
-                .then(() => instance.returnMinusPlusOne(0))
+                .then(() => instance.returnMinusOneCiao(0))
                 .then(txObject => {
                     if (typeof txObject.receipt.status !== "undefined") {
                         // Post Byzantium
                         assert.equal(txObject.receipt.status, 1);
                     }
                     assert.strictEqual(txObject.logs[0].args.value1.toString(16), MAX_UINT);
-                    assert.strictEqual(txObject.logs[0].args.value2.toString(10), "1");
+                    assert.strictEqual(txObject.logs[0].args.value2, "Ciao mondo");
                 });
         });
 
         it("should return minus and plus 1 in trace", function() {
             if (!hasDebug) this.skip("Needs debug API");
             const self = this;
-            const returnMinusPlusOneFunc = createRiddledSolidityFunction("returnMinusPlusOne");
-            return instance.returnMinusPlusOne(20)
+            const returnMinusOneCiaoFunc = createRiddledSolidityFunction("returnMinusOneCiao");
+            return instance.returnMinusOneCiao(20)
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
                     // TODO remove this check when TestRPC is fixed
@@ -396,32 +396,38 @@ contract('Riddled', function(accounts) {
                     assert.strictEqual(
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000013" +
-                        "0000000000000000000000000000000000000000000000000000000000000015");
-                    const unpackedOutputs = returnMinusPlusOneFunc.unpackOutput("0x" + trace.returnValue);
+                        "0000000000000000000000000000000000000000000000000000000000000040" +
+                        "000000000000000000000000000000000000000000000000000000000000000a" +
+                        "4369616f206d6f6e646f00000000000000000000000000000000000000000000");
+                    const unpackedOutputs = returnMinusOneCiaoFunc.unpackOutput("0x" + trace.returnValue);
                     assert.strictEqual(unpackedOutputs[0].toString(10), "19");
-                    assert.strictEqual(unpackedOutputs[1].toString(10), "21");
-                    return instance.returnMinusPlusOne(1);
+                    assert.strictEqual(unpackedOutputs[1], "Ciao mondo");
+                    return instance.returnMinusOneCiao(1);
                 })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
                     assert.strictEqual(
                         trace.returnValue,
                         "0000000000000000000000000000000000000000000000000000000000000000" +
-                        "0000000000000000000000000000000000000000000000000000000000000002");
-                    const unpackedOutputs = returnMinusPlusOneFunc.unpackOutput("0x" + trace.returnValue);
+                        "0000000000000000000000000000000000000000000000000000000000000040" +
+                        "000000000000000000000000000000000000000000000000000000000000000a" +
+                        "4369616f206d6f6e646f00000000000000000000000000000000000000000000");
+                    const unpackedOutputs = returnMinusOneCiaoFunc.unpackOutput("0x" + trace.returnValue);
                     assert.strictEqual(unpackedOutputs[0].toString(10), "0");
-                    assert.strictEqual(unpackedOutputs[1].toString(10), "2");
-                    return instance.returnMinusPlusOne(0);
+                    assert.strictEqual(unpackedOutputs[1], "Ciao mondo");
+                    return instance.returnMinusOneCiao(0);
                 })
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
                     assert.strictEqual(
                         trace.returnValue,
                         MAX_UINT +
-                        "0000000000000000000000000000000000000000000000000000000000000001");
-                    const unpackedOutputs = returnMinusPlusOneFunc.unpackOutput("0x" + trace.returnValue);
+                        "0000000000000000000000000000000000000000000000000000000000000040" +
+                        "000000000000000000000000000000000000000000000000000000000000000a" +
+                        "4369616f206d6f6e646f00000000000000000000000000000000000000000000");
+                    const unpackedOutputs = returnMinusOneCiaoFunc.unpackOutput("0x" + trace.returnValue);
                     assert.strictEqual(unpackedOutputs[0].toString(16), MAX_UINT);
-                    assert.strictEqual(unpackedOutputs[1].toString(10), "1");
+                    assert.strictEqual(unpackedOutputs[1], "Ciao mondo");
                 });
         });
     });
