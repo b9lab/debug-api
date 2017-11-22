@@ -54,7 +54,7 @@ contract('Riddled', function(accounts) {
             .then(
                 trace => hasDebug = typeof trace === "object"
                     && typeof trace.returnValue !== "undefined",
-                e => { console.log(e); throw e; }
+                e => { console.log(e); throw e; } // Let's discover what's failing.
             );
     });
 
@@ -246,8 +246,8 @@ contract('Riddled', function(accounts) {
                     assert.equal(trace.returnValue, 0);
                     const unpackedOutput = returnNotFunc.unpackOutput("0x" + trace.returnValue);
                     assert.isFalse(unpackedOutput);
-                    return instance.returnNot(false);
                 })
+                .then(() => instance.returnNot(false))
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
                     assert.strictEqual(
@@ -262,6 +262,7 @@ contract('Riddled', function(accounts) {
 
     describe("returnMinusOne()", function() {
         const MAX_UINT = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
         it("should return minus 1 on call", function() {
             return instance.returnMinusOne.call(20)
                 .then(returned => assert.strictEqual(returned.toString(10), "19"))
@@ -315,8 +316,8 @@ contract('Riddled', function(accounts) {
                     assert.equal("0x" + trace.returnValue, 19);
                     const unpackedOutput = returnMinusOneFunc.unpackOutput("0x" + trace.returnValue);
                     assert.strictEqual(unpackedOutput.toString(10), "19");
-                    return instance.returnMinusOne(1);
                 })
+                .then(() => instance.returnMinusOne(1))
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
                     assert.strictEqual(
@@ -325,8 +326,8 @@ contract('Riddled', function(accounts) {
                     assert.equal(trace.returnValue, 0);
                     const unpackedOutput = returnMinusOneFunc.unpackOutput("0x" + trace.returnValue);
                     assert.strictEqual(unpackedOutput.toString(10), "0");
-                    return instance.returnMinusOne(0);
                 })
+                .then(() => instance.returnMinusOne(0))
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => assert.strictEqual(trace.returnValue, MAX_UINT));
         });
@@ -334,6 +335,7 @@ contract('Riddled', function(accounts) {
 
     describe("returnMinusOneCiao()", function() {
         const MAX_UINT = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
         it("should return minus 1 and ciao on call", function() {
             return instance.returnMinusOneCiao.call(20)
                 .then(returned => {
@@ -402,8 +404,8 @@ contract('Riddled', function(accounts) {
                     const unpackedOutputs = returnMinusOneCiaoFunc.unpackOutput("0x" + trace.returnValue);
                     assert.strictEqual(unpackedOutputs[0].toString(10), "19");
                     assert.strictEqual(unpackedOutputs[1], "Ciao mondo");
-                    return instance.returnMinusOneCiao(1);
                 })
+                .then(() => instance.returnMinusOneCiao(1))
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
                     assert.strictEqual(
@@ -415,8 +417,8 @@ contract('Riddled', function(accounts) {
                     const unpackedOutputs = returnMinusOneCiaoFunc.unpackOutput("0x" + trace.returnValue);
                     assert.strictEqual(unpackedOutputs[0].toString(10), "0");
                     assert.strictEqual(unpackedOutputs[1], "Ciao mondo");
-                    return instance.returnMinusOneCiao(0);
                 })
+                .then(() => instance.returnMinusOneCiao(0))
                 .then(txObject => web3.debug.traceTransactionPromise(txObject.tx))
                 .then(trace => {
                     assert.strictEqual(
